@@ -8,16 +8,36 @@ const messageRouter = require('./controllers/messageController');
 
 app.use(express.json({ limit: '10mb' }));
 
-app.use(cors());
+const allowedOrigins = [
+    "http://localhost:3000",
+    "https://quickochat.netlify.app"
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true
+}));
+
+app.use(express.json({ limit: '10mb' }));
 
 const server = require('http').createServer(app);
+
+// Socket.IO with CORS
 const io = require('socket.io')(server, {
     cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST"]
+        origin: allowedOrigins,
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
+// Routers
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/chat', chatRouter);
